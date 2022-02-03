@@ -1,0 +1,105 @@
+#Проверка правильности установки docker
+docker run debian echo "Hello World"
+
+
+UnionFS - позволяет монтировать несколько файловых систем в обшую иерархию.
+1-Файловая система конкретного образа смонтирована только для чтения,
+любые изменения в контейнере происходят на уровне с разрешенной записью,
+который примонтирован поверх осноый файловой системы образа.
+
+
+
+
+#Интересный контейнер
+
+
+docker run -it --name cowsay --hostname cowsay debian bash
+
+
+                'Dockerfile'
+
+#Пример Dockerfile
+
+FROM debian:latest
+RUN apt update && apt install -y cowsay fortune
+
+FROM - базовый образа
+RUN  - команды, которые необходимо выполнить в образе
+
+Образы докер состоят из нескольких уровней (layers). Каждый уровень - файловая система, защищенная от записи. Для каждой инструкции в Dockerfile создаётся свой
+уровеннь, который размещается поверх предыдущих уровней. Во время преобразования образа в контейнер (docker run or docker create),  механизм Docker выбирает нужный
+образ и добавляет на самом верхнем уровне  ФС с возможностью записи. Тк ненужные уровни значительно увеличивают размер образа (есть лимит 127 слоев). Во мнохих
+Dockerfile в инструкции RUN пишут множество команд. Контейнер имеет статс: status: created, restarting, running, paused, exited
+
+
+
+
+
+Определение точки входа. ENTRYPOINT - определение выполянемого файла, который будет обрабатывать любые аргументы, переданные докер
+docker run -it -h COWSAY --name cowsay_dockerfile-entrypoint best/cowsay-dockerfile-entrypoint 'Mooooo' 
+
+
+                            'Общая информация: Dockerfile'
+
+FROM - Указывает на базовый image например ( FROM debian:latest ) 
+RUN  - Команды выполняемые внутри контейнера (RUN apt update && apt install -y cowsay fortune)
+COPY - Копирование файла из ФС хоста в ФС контейнера. Файл должен располагаться в одной папке с Dockerfile ( COPY entrypoint.sh / )
+ENTRYPOINT - определение выполянемого файла, которому передаются аргументы при запуске контейнера ( ENTRYPOINT [ "/usr/games/cowsay" ] )
+VOLUME - подключение к контейнеру файла или папки хоста
+#VOLUME /data
+
+
+
+
+                            'Разбор Dockerfile'
+#Dockerfile1
+FROM debian:latest
+RUN apt update && apt install -y cowsay fortune
+СOPY entrypoint.sh /
+ENTRYPOINT [ "/usr/games/cowsay" ]
+
+
+
+
+
+
+
+
+#Dockerfile2
+FROM debian:latest
+RUN apt update && apt install -y cowsay fortune
+COPY entrypoint.sh /
+#Скрипт обработки аргументов
+ENTRYPOINT [ "/entrypoint.sh" ]
+
+
+
+                'Реестры'
+    Для хранения образов применяется иерарххическая система. Термиы:
+    'Реестр (registry)' - сервис отвечает за хранение и распространение образов. По умолчанию DockerHub
+    'Репозиторий (repository)' - набор взаимосвязанх образов (разные версии)
+    'Тег (tag)' - алфавитно цифровой идентификатор, присваиваемый образам внутри repository 
+
+#загрузит образ с тегом latest в репозитории amoat/revealjs из реестра dockerhub
+docker pull amoat/revealjs:latest 
+
+                Пространства имен для образов
+    Выгружаемые образы могут принадлежать одному из 3 пространств имен:
+1) / : начинаются со слэша. Например amout/revealjs принадлежит пространству имен user. В репозитории DockerHub это образы
+выгруженые пользователями. amout/revealjs  -  пользователь amount , имя образа revealjs.
+2) Имена подобные debian, ubuntu без префиков принадлежит пространству имен 'root' зарегистрированных для оф. образов известных
+компаний.
+3) Имена с префиксами в виде hostname или ip представляют образы, которые хранятся на сторонних реестрах. Например:
+localhost:5000/worldpress  -   образ wordpress в локальном реестре.
+
+
+#Разбор --link
+docker run -it --rm --link myredis:redis redis /bin/bash
+--link myredis:redis Соединение нового контейнера с существующим с именем myredis, и в новом контейнере
+ссылка на существующий прописывается в /etc/hosts.
+--link - аргумент установления соединения.
+myredis - существующий контейнер
+redis - алиса существующего контейнера в /etc/hosts
+
+
+                    'Тома'
